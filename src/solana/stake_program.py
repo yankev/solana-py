@@ -14,7 +14,8 @@ CONFIG_STAKE_PUBKEY: PublicKey = PublicKey(
 SYS_PROGRAM_ID: PublicKey = PublicKey("11111111111111111111111111111111")
 """Public key that identifies the System program."""
 
-STAKE_PROGRAM_ID: PublicKey = PublicKey("11111111111111111111111111111111")
+STAKE_PROGRAM_ID: PublicKey = PublicKey(
+    "Stake11111111111111111111111111111111111111")
 """Public key that identifies the Stake program."""
 
 
