@@ -38,6 +38,8 @@ class Lockup(NamedTuple):
 
 class InitializeStakeParams(NamedTuple):
     """Initialize Staking params"""
+    from_pubkey: PublicKey
+    """"""
     stake_pubkey: PublicKey
     """"""
     authorized: Authorized
@@ -240,6 +242,7 @@ def initialize_stake(params: InitializeStakeParams) -> TransactionInstruction:
         epoch=params.lockup.epoch,
         custodian=bytes(params.lockup.custodian)
     )
+
     data = STAKE_INSTRUCTIONS_LAYOUT.build(
         dict(
             instruction_type=StakeInstructionType.INITIALIZE_STAKE_ACCOUNT,
@@ -269,8 +272,8 @@ def _create_stake_account_instruction(params: Union[CreateStakeAccountParams, Cr
                 from_pubkey=params.from_pubkey,
                 new_account_pubkey=params.stake_pubkey,
                 lamports=params.lamports,
-                space=80,  # derived from rust implementation
-                program_id=SYS_PROGRAM_ID,
+                space=200,  # derived from rust implementation
+                program_id=STAKE_PROGRAM_ID,
             )
         )
     return create_account_with_seed(
@@ -280,8 +283,8 @@ def _create_stake_account_instruction(params: Union[CreateStakeAccountParams, Cr
             base_pubkey=params.base_pubkey,
             seed=params.seed,
             lamports=params.lamports,
-            space=80,  # derived from rust implementation
-            program_id=SYS_PROGRAM_ID,
+            space=200,  # derived from rust implementation
+            program_id=STAKE_PROGRAM_ID,
         )
     )
 
@@ -291,6 +294,7 @@ def create_stake_account(params: Union[CreateStakeAccountParams, CreateStakeAcco
 
     initialize_stake_instruction = initialize_stake(
         InitializeStakeParams(
+            from_pubkey=params.from_pubkey,
             stake_pubkey=params.stake_pubkey,
             authorized=params.authorized,
             lockup=params.lockup,
@@ -300,4 +304,17 @@ def create_stake_account(params: Union[CreateStakeAccountParams, CreateStakeAcco
     create_account_instruction = _create_stake_account_instruction(
         params=params)
 
-    return Transaction(fee_payer=params.from_pubkey).add(create_account_instruction, initialize_stake_instruction)
+    return Transaction().add(create_account_instruction, initialize_stake_instruction)
+    # return Transaction(fee_payer=params.from_pubkey).add(create_account_instruction)
+
+
+def test_initialize_stake(params):
+    initialize_stake_instruction = initialize_stake(
+        InitializeStakeParams(
+            from_pubkey=params.from_pubkey,
+            stake_pubkey=params.stake_pubkey,
+            authorized=params.authorized,
+            lockup=params.lockup,
+        )
+    )
+    return Transaction(params.from_pubkey).add(initialize_stake_instruction)
