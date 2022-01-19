@@ -36,7 +36,7 @@ _WITHDRAW_STAKE_ACCOUNT_LAYOUT = cStruct(
     "lamports" / Int64ul,
 )
 
-_STAKE_INSTRUCTIONS_LAYOUT = cStruct(
+STAKE_INSTRUCTIONS_LAYOUT = cStruct(
     "instruction_type" / Int32ul,
     "args"
     / Switch(
