@@ -147,10 +147,12 @@ class WithdrawStakeParams(NamedTuple):
 def withdraw_stake(params: WithdrawStakeParams) -> TransactionInstruction:
     """TODO"""
     data = STAKE_INSTRUCTIONS_LAYOUT.build(
-        instruction_type=StakeInstructionType.WITHDRAW_STAKE,
-        args=dict(
-            lamports=params.lamports
-        ),
+        dict(
+            instruction_type=StakeInstructionType.WITHDRAW_STAKE,
+            args=dict(
+                lamports=params.lamports
+            ),
+        )
     )
 
     withdraw_instruction = TransactionInstruction(
@@ -174,7 +176,7 @@ def withdraw_stake(params: WithdrawStakeParams) -> TransactionInstruction:
 
 
 def create_account_and_delegate_stake(params: Union[CreateAccountAndDelegateStakeParams, CreateAccountWithSeedAndDelegateStakeParams]) -> Transaction:
-    """Generate a transaction to crate and delegate a stake account"""
+    """Generate a transaction to crate and delegate a stake account TODO"""
 
     initialize_stake_instruction = initialize_stake(
         InitializeStakeParams(
@@ -202,8 +204,10 @@ def delegate_stake(params: DelegateStakeParams) -> TransactionInstruction:
     """Generate an instruction to delete a Stake account"""
 
     data = STAKE_INSTRUCTIONS_LAYOUT.build(
-        instruction_type=StakeInstructionType.DELEGATE_STAKE_ACCOUNT,
-        args={},
+        dict(
+            instruction_type=StakeInstructionType.DELEGATE_STAKE_ACCOUNT,
+            args={},
+        )
     )
     return TransactionInstruction(
         keys=[
@@ -228,19 +232,21 @@ def delegate_stake(params: DelegateStakeParams) -> TransactionInstruction:
 def initialize_stake(params: InitializeStakeParams) -> TransactionInstruction:
     """Generate an instruction to initialize a Stake account."""
     authorized = dict(
-        staker=params.authorized.staker,
-        withdrawer=params.authorized.withdrawer,
+        staker=bytes(params.authorized.staker),
+        withdrawer=bytes(params.authorized.withdrawer),
     )
     lockup = dict(
         unix_timestamp=params.lockup.unix_timestamp,
         epoch=params.lockup.epoch,
-        custodian=params.lockup.custodian
+        custodian=bytes(params.lockup.custodian)
     )
     data = STAKE_INSTRUCTIONS_LAYOUT.build(
-        instruction_type=StakeInstructionType.INITIALIZE_STAKE_ACCOUNT,
-        args=dict(
-            authorized=authorized,
-            lockup=lockup,
+        dict(
+            instruction_type=StakeInstructionType.INITIALIZE_STAKE_ACCOUNT,
+            args=dict(
+                authorized=authorized,
+                lockup=lockup,
+            )
         )
     )
 
@@ -251,7 +257,7 @@ def initialize_stake(params: InitializeStakeParams) -> TransactionInstruction:
             AccountMeta(pubkey=sysvar.SYSVAR_RENT_PUBKEY,
                         is_signer=False, is_writable=False),
         ],
-        program_id=SYS_PROGRAM_ID,
+        program_id=STAKE_PROGRAM_ID,
         data=data,
     )
 
