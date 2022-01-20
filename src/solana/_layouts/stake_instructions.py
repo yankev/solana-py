@@ -33,12 +33,6 @@ _INITIALIZE_STAKE_ACCOUNT_LAYOUT = cStruct(
 )
 
 
-# _DELEGATE_STAKE_ACCOUNT_LAYOUT = cStruct(
-#     "stake_pubkey" / PUBLIC_KEY_LAYOUT,
-#     "authorized_pubkey" / PUBLIC_KEY_LAYOUT,
-#     "vote_pubkey" / PUBLIC_KEY_LAYOUT,
-# )
-
 _WITHDRAW_STAKE_ACCOUNT_LAYOUT = cStruct(
     "lamports" / Int64ul,
 )
@@ -51,6 +45,7 @@ STAKE_INSTRUCTIONS_LAYOUT = cStruct(
         {
             StakeInstructionType.INITIALIZE_STAKE_ACCOUNT: _INITIALIZE_STAKE_ACCOUNT_LAYOUT,
             StakeInstructionType.DELEGATE_STAKE: Pass,
+            StakeInstructionType.DEACTIVATE: Pass,
             StakeInstructionType.WITHDRAW_STAKE: _WITHDRAW_STAKE_ACCOUNT_LAYOUT,
         },
     ),

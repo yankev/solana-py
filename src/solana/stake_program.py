@@ -93,6 +93,15 @@ class DelegateStakeParams(NamedTuple):
     """"""
 
 
+class DeactivateStakeParams(NamedTuple):
+    """Create deactivate stake account transaction params."""
+
+    stake_pubkey: PublicKey
+    """"""
+    authorized_pubkey: PublicKey
+    """"""
+
+
 class CreateAccountAndDelegateStakeParams(NamedTuple):
     """Create and delegate a stake account transaction params"""
 
@@ -317,6 +326,41 @@ def create_stake_account(params: Union[CreateStakeAccountParams, CreateStakeAcco
     # I could add the payer field for the transaction here
     # or we can also do that in the client
     return Transaction().add(create_account_instruction, initialize_stake_instruction)
+
+
+def deactivate_stake_instruction(params: DeactivateStakeParams) -> TransactionInstruction:
+    """
+    Get instructions for deactivating stake
+    """
+
+    data = STAKE_INSTRUCTIONS_LAYOUT.build(
+        dict(
+            instruction_type=StakeInstructionType.DEACTIVATE,
+            args={}
+        )
+    )
+
+    return TransactionInstruction(
+        keys=[
+            AccountMeta(pubkey=params.stake_pubkey,
+                        is_signer=False, is_writable=True),
+            AccountMeta(pubkey=sysvar.SYSVAR_CLOCK_PUBKEY,
+                        is_signer=False, is_writable=False),
+            AccountMeta(pubkey=params.authorized_pubkey,
+                        is_signer=True, is_writable=False),
+        ],
+        program_id=STAKE_PROGRAM_ID,
+        data=data,
+    )
+
+
+def deactivate_stake(params: DeactivateStakeParams) -> Transaction:
+    """
+    Returns the deactivate stake transaction
+    """
+
+    ix = deactivate_stake_instruction(params)
+    return Transaction().add(ix)
 
 
 def test_initialize_stake(params):
