@@ -9,7 +9,7 @@ from solana.utils.validate import validate_instruction_keys, validate_instructio
 from solana.system_program import create_account, CreateAccountParams, create_account_with_seed, CreateAccountWithSeedParams
 
 CONFIG_STAKE_PUBKEY: PublicKey = PublicKey(
-    "ConfigStake11111111111111111111111111111111")
+    "StakeConfig11111111111111111111111111111111")
 
 SYS_PROGRAM_ID: PublicKey = PublicKey("11111111111111111111111111111111")
 """Public key that identifies the System program."""
@@ -202,19 +202,20 @@ def create_account_and_delegate_stake(params: Union[CreateAccountAndDelegateStak
     return Transaction(fee_payer=params.from_pubkey).add(create_account_instruction, initialize_stake_instruction)
 
 
-def delegate_stake(params: DelegateStakeParams) -> TransactionInstruction:
+def delegate_stake_instruction(params: DelegateStakeParams) -> TransactionInstruction:
     """Generate an instruction to delete a Stake account"""
 
     data = STAKE_INSTRUCTIONS_LAYOUT.build(
         dict(
-            instruction_type=StakeInstructionType.DELEGATE_STAKE_ACCOUNT,
-            args={},
+            instruction_type=StakeInstructionType.DELEGATE_STAKE,
+            args={}
         )
     )
+
     return TransactionInstruction(
         keys=[
             AccountMeta(pubkey=params.stake_pubkey,
-                        is_signer=True, is_writable=True),
+                        is_signer=False, is_writable=True),
             AccountMeta(pubkey=params.vote_pubkey,
                         is_signer=False, is_writable=False),
             AccountMeta(pubkey=sysvar.SYSVAR_CLOCK_PUBKEY,
@@ -224,11 +225,18 @@ def delegate_stake(params: DelegateStakeParams) -> TransactionInstruction:
             AccountMeta(pubkey=CONFIG_STAKE_PUBKEY,
                         is_signer=False, is_writable=False),
             AccountMeta(pubkey=params.authorized_pubkey,
-                        is_signer=False, is_writable=False),
+                        is_signer=True, is_writable=False),
         ],
-        program_id=SYS_PROGRAM_ID,
+        program_id=STAKE_PROGRAM_ID,
         data=data,
     )
+
+
+def delegate_stake(params: DelegateStakeParams) -> Transaction:
+    """Generate an instruction to delete a Stake account"""
+
+    ix = delegate_stake_instruction(params)
+    return Transaction().add(ix)
 
 
 def initialize_stake(params: InitializeStakeParams) -> TransactionInstruction:
@@ -290,7 +298,9 @@ def _create_stake_account_instruction(params: Union[CreateStakeAccountParams, Cr
 
 
 def create_stake_account(params: Union[CreateStakeAccountParams, CreateStakeAccountWithSeedParams]) -> Transaction:
-    """Generate a Transaction that creates a new Staking Account"""
+    """Generate a Transaction that creates a new Staking Account
+    Note: Haven't tested the version where I provide a seed
+    """
 
     initialize_stake_instruction = initialize_stake(
         InitializeStakeParams(
@@ -304,11 +314,16 @@ def create_stake_account(params: Union[CreateStakeAccountParams, CreateStakeAcco
     create_account_instruction = _create_stake_account_instruction(
         params=params)
 
+    # I could add the payer field for the transaction here
+    # or we can also do that in the client
     return Transaction().add(create_account_instruction, initialize_stake_instruction)
-    # return Transaction(fee_payer=params.from_pubkey).add(create_account_instruction)
 
 
 def test_initialize_stake(params):
+    """
+    TODO: Check if this still works as a stand alone
+    Not important to have though
+    """
     initialize_stake_instruction = initialize_stake(
         InitializeStakeParams(
             from_pubkey=params.from_pubkey,

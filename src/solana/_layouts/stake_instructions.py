@@ -11,9 +11,9 @@ class StakeInstructionType(IntEnum):
     """Instruction types for staking program."""
 
     INITIALIZE_STAKE_ACCOUNT = 0
-    DELEGATE_STAKE = 1
-    DEACTIVATE = 2
-    WITHDRAW_STAKE = 3
+    DELEGATE_STAKE = 2
+    WITHDRAW_STAKE = 4
+    DEACTIVATE = 5
 
 
 _AUTHORIZED_LAYOUT = cStruct(
@@ -31,6 +31,13 @@ _INITIALIZE_STAKE_ACCOUNT_LAYOUT = cStruct(
     "authorized" / _AUTHORIZED_LAYOUT,
     "lockup" / _LOCKUP_LAYOUT,
 )
+
+
+# _DELEGATE_STAKE_ACCOUNT_LAYOUT = cStruct(
+#     "stake_pubkey" / PUBLIC_KEY_LAYOUT,
+#     "authorized_pubkey" / PUBLIC_KEY_LAYOUT,
+#     "vote_pubkey" / PUBLIC_KEY_LAYOUT,
+# )
 
 _WITHDRAW_STAKE_ACCOUNT_LAYOUT = cStruct(
     "lamports" / Int64ul,
