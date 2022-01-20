@@ -1,4 +1,4 @@
-from typing import Any, NamedTuple, Union
+from typing import Any, NamedTuple, Union, Optional
 
 from solana import sysvar
 from solana._layouts.system_instructions import SYSTEM_INSTRUCTIONS_LAYOUT, InstructionType
@@ -145,18 +145,18 @@ class WithdrawStakeParams(NamedTuple):
 
     stake_pubkey: PublicKey
     """"""
-    withdrawer_pubkey: PublicKey
+    authorized_pubkey: PublicKey
     """"""
     to_pubkey: PublicKey
     """"""
     lamports: int
     """"""
-    custodian_pubkey: PublicKey
+    custodian_pubkey: Optional[PublicKey] = None
     """"""
 
 
-def withdraw_stake(params: WithdrawStakeParams) -> TransactionInstruction:
-    """TODO"""
+def withdraw_stake_instruction(params: WithdrawStakeParams) -> TransactionInstruction:
+    """Get withdraw instructions"""
     data = STAKE_INSTRUCTIONS_LAYOUT.build(
         dict(
             instruction_type=StakeInstructionType.WITHDRAW_STAKE,
@@ -166,24 +166,37 @@ def withdraw_stake(params: WithdrawStakeParams) -> TransactionInstruction:
         )
     )
 
+    keys = [
+        AccountMeta(pubkey=params.stake_pubkey,
+                    is_signer=False, is_writable=True),
+        AccountMeta(pubkey=params.to_pubkey,
+                    is_signer=False, is_writable=True),
+        AccountMeta(pubkey=sysvar.SYSVAR_CLOCK_PUBKEY,
+                    is_signer=False, is_writable=False),
+        AccountMeta(pubkey=sysvar.SYSVAR_STAKE_HISTORY_PUBKEY,
+                    is_signer=False, is_writable=False),
+        AccountMeta(pubkey=params.authorized_pubkey,
+                    is_signer=True, is_writable=True),
+    ]
+
+    if params.custodian_pubkey is not None:
+        keys.append(AccountMeta(pubkey=params.custodian_pubkey,
+                                is_signer=False, is_writable=False),
+                    )
+
     withdraw_instruction = TransactionInstruction(
-        keys=[
-            AccountMeta(pubkey=params.stake_pubkey,
-                        is_signer=True, is_writable=True),
-            AccountMeta(pubkey=params.to_pubkey,
-                        is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.to_pubkey,
-                        is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.to_pubkey,
-                        is_signer=False, is_writable=True),
-            AccountMeta(pubkey=params.to_pubkey,
-                        is_signer=False, is_writable=True),
-        ],
-        program_id=SYS_PROGRAM_ID,
+        keys=keys,
+
+        program_id=STAKE_PROGRAM_ID,
         data=data,
     )
 
     return withdraw_instruction
+
+
+def withdraw_stake(params: WithdrawStakeParams) -> Transaction:
+    ix = withdraw_stake_instruction(params)
+    return Transaction().add(ix)
 
 
 def create_account_and_delegate_stake(params: Union[CreateAccountAndDelegateStakeParams, CreateAccountWithSeedAndDelegateStakeParams]) -> Transaction:
